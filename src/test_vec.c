@@ -2,9 +2,14 @@
 #include <except/assert.h>
 #include "../include/ds.h"
 
-int main(void)
+void test_capacity_growth(void)
 {
-  VEC(int) vec = VEC_INIT(vec, 100);
+  
+}
+
+void test_basic_func(void)
+{
+    VEC(int) vec = VEC_INIT(vec, 100);
   assert(VEC_CAPACITY(vec) == 100, "Must be 100");
   assert(vec.buff != NULL, "Can't be null");
   
@@ -29,7 +34,14 @@ int main(void)
   assert(4 == VEC_GET(vec, 0));
   assert(3 == VEC_GET(vec, 1));
   assert(2 == VEC_GET(vec, 2));
-  
+}
+
+
+int main(void)
+{
+
+  test_basic_func();
+  test_capacity_growth();
   return 0;
 }
 

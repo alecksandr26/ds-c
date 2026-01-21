@@ -30,8 +30,7 @@ void Vec_push_back(Vec *vec, uint8_t *new_val)
     /* TODO: This will growth in an exponential way */
     vec->container.buff = ds_mem_ralloc(vec->container.buff, vec->container.capacity * 2);
   }
-  /* TODO: Implement memcpy */
-  memcpy(vec->container.buff + vec->container.size * vec->container.type_size, new_val, vec->container.type_size);
+  ds_mem_copy(vec->container.buff + vec->container.size * vec->container.type_size, new_val, vec->container.type_size);
   vec->container.size++;
 }
 
@@ -78,10 +77,9 @@ void Vec_insert(Vec *vec, uint32_t index, uint8_t *new_val)
   }
 
   for (uint32_t i = vec->container.size; i > index; i--) {
-    /* TODO: Implement memcpy or something like that */
-    memcpy(vec->container.buff + i * vec->container.type_size, vec->container.buff + (i - 1) * vec->container.type_size, vec->container.type_size);
+    ds_mem_copy(vec->container.buff + i * vec->container.type_size, vec->container.buff + (i - 1) * vec->container.type_size, vec->container.type_size);
   }
-  memcpy(vec->container.buff + index * vec->container.type_size, new_val, vec->container.type_size);
+  ds_mem_copy(vec->container.buff + index * vec->container.type_size, new_val, vec->container.type_size);
 
   vec->container.size++;
 }
@@ -100,7 +98,7 @@ void Vec_remove(Vec *vec, uint32_t index)
   }
   
   for (uint32_t i = index; i < vec->container.size - 1; i++) {
-    memcpy(vec->container.buff + i * vec->container.type_size,
+    ds_mem_copy(vec->container.buff + i * vec->container.type_size,
 	   vec->container.buff + (i + 1) * vec->container.type_size,
 	   vec->container.type_size);
   }
