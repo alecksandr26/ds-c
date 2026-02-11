@@ -2,9 +2,6 @@
 #define VEC_INCLUDED
 
 #include <inttypes.h>
-#include <except.h>
-
-#include "ds_mem.h"
 #include "ds_container.h"
 
 #define DEFAULT_VEC_CAPACITY 256

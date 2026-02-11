@@ -11,7 +11,7 @@ BUILD_DIR = build
 OBJ_DIR = $(addprefix $(BUILD_DIR)/, obj)
 LIB_DIR = $(addprefix $(BUILD_DIR)/, lib)
 TEST_DIR = $(addprefix $(BUILD_DIR)/, test)
-OBJS = $(addprefix $(OBJ_DIR)/, vec.o ds_mem.o)
+OBJS = $(addprefix $(OBJ_DIR)/, vec.o ds_mem.o ds_exception.o)
 STATIC_LIB = ds.a
 LIBS = $(addprefix $(LIB_DIR)/, ds.so $(STATIC_LIB))
 TESTS = $(addprefix $(TEST_DIR)/, test_ds_mem.out test_vec.out)
@@ -54,5 +54,6 @@ test: $(notdir $(TESTS))
 
 clean:
 	rm -r -v $(BUILD_DIR)
+	make
 
 
