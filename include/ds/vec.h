@@ -25,9 +25,7 @@
 
 #define VEC_PUSH_BACK(vec, new_val)			\
   __extension__ ({					\
-      /* TODO: We need a memcpy */					\
-      typeof(new_val) __ds_vec_new_element = (new_val);			\
-      /* TODO: Add a type validation */					\
+      typeof(*(vec).buff) __ds_vec_new_element = (new_val);			\
       Vec_push_back((Vec *) &(vec), (uint8_t *) &__ds_vec_new_element);	\
     })
 
@@ -39,8 +37,7 @@
 
 #define VEC_INSERT(vec, index, new_val)					\
   __extension__ ({							\
-      /* TODO: We need a memcpy */					\
-      typeof(new_val) __ds_vec_insert_element = (new_val);		\
+      typeof(*(vec).buff) __ds_vec_insert_element = (new_val);			\
       Vec_insert((Vec *) &(vec), index, (uint8_t *) &__ds_vec_insert_element);	\
     })
 

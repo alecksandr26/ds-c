@@ -5,7 +5,11 @@
 
 void test_capacity_growth(void)
 {
+
+  
   VEC(int) vec = VEC_INIT(vec, 2);
+
+  
   assert(VEC_CAPACITY(vec) == 2);
   assert(VEC_SIZE(vec) == 0);
 

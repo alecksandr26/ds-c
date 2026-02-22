@@ -1,4 +1,3 @@
-/* TODO: Add the exceptions module */
 #include <except/assert.h>
 #include <stdio.h>
 #include "../include/ds/vec.h"
@@ -81,6 +80,7 @@ void Vec_insert(Vec *vec, uint32_t index, uint8_t *new_val)
     vec->container.capacity *= 2;
   }
 
+  // TODO: See if it is possible to vectorize this part
   for (uint32_t i = vec->container.size; i > index; i--) {
     ds_mem_copy(vec->container.buff + i * vec->container.type_size, vec->container.buff + (i - 1) * vec->container.type_size, vec->container.type_size);
   }
@@ -102,7 +102,8 @@ void Vec_remove(Vec *vec, uint32_t index)
     if (vec->container.buff == NULL) RAISE(ExceptBadAlloc, "Null alloc with the defined ds_mem_alloc");
     vec->container.capacity = vec->container.size + 1;
   }
-  
+
+  // TODO: See if it is possible to vectorize this part
   for (uint32_t i = index; i < vec->container.size - 1; i++) {
     ds_mem_copy(vec->container.buff + i * vec->container.type_size,
 	   vec->container.buff + (i + 1) * vec->container.type_size,
