@@ -35,7 +35,8 @@ void test_capacity_growth(void)
 
 void test_basic_func(void)
 {
-  VEC(int) vec = VEC_INIT(vec, 100);
+  VEC(int) vec;
+  VEC_INIT(vec, 100);
   assert(VEC_CAPACITY(vec) == 100, "Must be 100");
   assert(vec.buff != NULL, "Can't be null");
   

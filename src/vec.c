@@ -68,10 +68,10 @@ uint8_t *Vec_get(Vec *vec, uint32_t index)
 void Vec_insert(Vec *vec, uint32_t index, uint8_t *new_val)
 {
   if (vec == NULL) RAISE(ExceptInvalidArgument, "Vec can't be null");
+  if (vec->container.size <= index) RAISE(ExceptInvalidArgument, "Invalid index");
   if (vec->container.buff == NULL) RAISE(ExceptInvalidArgument, "Container.Buff can't be null");
   if (vec->container.capacity == 0) RAISE(ExceptInvalidArgument, "Capacity can't be zero");
   if (vec->container.type_size == 0) RAISE(ExceptInvalidArgument, "TypeSize can't be zero");
-  if (vec->container.size <= index) RAISE(ExceptInvalidArgument, "Invalid index");
 
   if (vec->container.size + 1 == vec->container.capacity) {
     /* TODO: This will growth in an exponential way */
@@ -112,16 +112,17 @@ void Vec_remove(Vec *vec, uint32_t index)
   vec->container.size--;
 }
 
+
+// TODO: Create the destroy method and clear should only reset the data structure
 void Vec_clear(Vec *vec)
 {
   if (vec == NULL) RAISE(ExceptInvalidArgument, "Vec can't be null");
   if (vec->container.buff == NULL) RAISE(ExceptInvalidArgument, "Container.Buff can't be null");
   if (vec->container.capacity == 0) RAISE(ExceptInvalidArgument, "Capacity can't be zero");
   if (vec->container.type_size == 0) RAISE(ExceptInvalidArgument, "TypeSize can't be zero");
-  
+
   ds_mem_free(vec->container.buff);
   vec->container.buff = NULL;
-  vec->container.type_size = 0;
   vec->container.capacity = 0;
   vec->container.size = 0;
 }

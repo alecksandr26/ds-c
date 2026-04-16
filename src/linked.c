@@ -1,4 +1,3 @@
-
 #include <inttypes.h>
 #include <except/assert.h>
 
@@ -6,6 +5,7 @@
 #include "../include/ds/ds_exception.h"
 #include "../include/ds/ds_mem.h"
 #include "consts.h"
+#include "../include/ds/iterator.h"
 
 uint64_t *LinkedList_fetch_foo_ptr_mem_reg(LinkedList *linked)
 {
@@ -20,6 +20,7 @@ void LinkedList_set_state(LinkedList *linked, DS_State state)
   assert(state == DS_STATE_ALIVE || state == DS_STATE_DESTROYED);
   
   uint64_t *foo_ptr_mem_reg = LinkedList_fetch_foo_ptr_mem_reg(linked);
+  (*foo_ptr_mem_reg) = 0;
   (*foo_ptr_mem_reg) = (uint64_t) state;
 }
 
@@ -32,6 +33,53 @@ DS_State LinkedList_get_state(LinkedList *linked)
 }
 
 
+void LinkedList_Iterator_inc(Iterator *iterator)
+{
+  // TODO: Find the way of adding some reusable function
+  if (iterator == NULL) RAISE(ExceptInvalidArgument, "Iterator can't be null");
+  if (iterator->ds == NULL) RAISE(ExceptInvalidArgument, "Iterator.ds can't be null");
+  LinkedList *linked = (LinkedList *) iterator->ds;
+
+  
+  if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty linked list");
+  if (iterator->index >= linked->size) RAISE(ExceptInvalidArgument, "Invalid Iterator");
+  if (iterator->index_ptr == NULL) RAISE(ExceptInvalidArgument, "Invalid Iterator");
+  if (iterator->index + 1 == linked->size) RAISE(ExceptInvalidArgument, "Can't iterate; already in the top");
+  
+  iterator->index_ptr = (uint8_t *) ((Node * ) iterator->index_ptr)->next;
+  iterator->index++;
+}
+
+
+void LinkedList_Iterator_dec(Iterator *iterator)
+{
+  // TODO: Find the way of adding some reusable function
+  if (iterator == NULL) RAISE(ExceptInvalidArgument, "Iterator can't be null");
+  if (iterator->ds == NULL) RAISE(ExceptInvalidArgument, "Iterator.ds can't be null");
+  LinkedList *linked = (LinkedList *) iterator->ds;
+
+  if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty linked list");
+  if (iterator->index >= linked->size) RAISE(ExceptInvalidArgument, "Invalid Iterator");
+  if (iterator->index_ptr == NULL) RAISE(ExceptInvalidArgument, "Invalid Iterator");
+  if (iterator->index == 0) RAISE(ExceptInvalidArgument, "Can't iterate; already in the bottom");
+  
+  iterator->index_ptr = (uint8_t *) ((Node * ) iterator->index_ptr)->prev;
+  iterator->index--;
+}
+
+
+const uint8_t *LinkedList_Iterator_get_data(Iterator *iterator)
+{
+  if (iterator == NULL) RAISE(ExceptInvalidArgument, "Iterator can't be null");
+  if (iterator->ds == NULL) RAISE(ExceptInvalidArgument, "Iterator.ds can't be null");
+  LinkedList *linked = (LinkedList *) iterator->ds;
+
+  if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty linked list");
+
+  return ((Node *) iterator->index_ptr)->data_ptr;
+}
+
+
 void LinkedList_basic_validations(LinkedList *linked)
 {
   if (linked == NULL) RAISE(ExceptInvalidArgument, "Linked can't be null");
@@ -40,7 +88,7 @@ void LinkedList_basic_validations(LinkedList *linked)
 
 void LinkedList_init(LinkedList *linked, uint32_t type_size)
 {
-  LinkedList_basic_validations(linked);
+  if (linked == NULL) RAISE(ExceptInvalidArgument, "Linked can't be null");
   if (type_size == 0) RAISE(ExceptInvalidArgument, "TypeSize can't be zero");
 
   linked->head = linked->tail = NULL;
@@ -200,4 +248,37 @@ void LinkedList_destroy(LinkedList *linked)
   linked->size = 0;
   linked->type_size = 0;
   LinkedList_set_state(linked, DS_STATE_DESTROYED);
+}
+
+
+void LinkedList_begin(LinkedList *linked, Iterator *iterator)
+{
+  LinkedList_basic_validations(linked);
+  if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't fetch any iterator from an empty linked list");
+  
+  (*iterator) = (Iterator) {
+    .ds = (const uint8_t *) linked,
+    .index_ptr = (uint8_t *) linked->tail,
+    .index = 0,
+    .inc = &(LinkedList_Iterator_inc),
+    .dec = &(LinkedList_Iterator_dec),
+    .get_data = &(LinkedList_Iterator_get_data)
+  };
+}
+
+
+void LinkedList_end(LinkedList *linked, Iterator *iterator)
+{
+  LinkedList_basic_validations(linked);
+  if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't fetch any iterator from an empty linked list");
+
+  (*iterator) = (Iterator) {
+    .ds = (const uint8_t *) linked,
+    .index_ptr = (uint8_t *) linked->head,
+    .index = linked->size - 1,
+    .inc = &(LinkedList_Iterator_inc),
+    .dec = &(LinkedList_Iterator_dec),
+    .get_data = &(LinkedList_Iterator_get_data)
+  };
+  
 }

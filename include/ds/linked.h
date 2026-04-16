@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 
+#include "iterator.h"
 
 #define LINKED_LIST(type)			\
   struct {					\
@@ -64,6 +65,21 @@
 #define LINKED_LIST_DESTROY(linked) \
   LinkedList_destroy((LinkedList *) &(linked))
 
+
+#define LINKED_LIST_BEGIN(linked, iterator)	\
+  __extension__ ({				\
+      LinkedList_begin((LinkedList *) &(linked), (Iterator *) &(iterator)); \
+      (iterator);							\
+    })
+
+
+#define LINKED_LIST_END(linked, iterator)	\
+  __extension__ ({				\
+      LinkedList_end((LinkedList *) &(linked), (Iterator *) &(iterator)); \
+      (iterator);							\
+    })
+
+
 typedef struct Node_st {
   struct Node_st *next, *prev;
   const uint8_t *data_ptr;
@@ -86,6 +102,8 @@ extern void LinkedList_pop_back(LinkedList *linked);
 extern void LinkedList_pop_front(LinkedList *linked);
 extern void LinkedList_clear(LinkedList *linked);
 extern void LinkedList_destroy(LinkedList *linked);
+extern void LinkedList_begin(LinkedList *linked, Iterator *iterator);
+extern void LinkedList_end(LinkedList *linked, Iterator *iterator);
 
 
 #endif /* LINKED_INCLUDED */
