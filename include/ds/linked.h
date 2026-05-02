@@ -4,11 +4,13 @@
 #include <inttypes.h>
 
 #include "iterator.h"
+#include "consts.h"
 
 #define LINKED_LIST(type)			\
   struct {					\
     const uint8_t *head, *tail;			\
     const uint32_t type_size, size;		\
+    const DS_State state;			\
     const type * const foo_ptr;			\
   }
 
@@ -66,32 +68,79 @@
   LinkedList_destroy((LinkedList *) &(linked))
 
 
-#define LINKED_LIST_BEGIN(linked, iterator)	\
-  __extension__ ({				\
-      LinkedList_begin((LinkedList *) &(linked), (Iterator *) &(iterator)); \
-      (iterator);							\
+#define _LINKED_LIST_BEGIN_2(linked, iterator, cmp)                     \
+    __extension__ ({                                                    \
+        LinkedList_begin(                                               \
+            (LinkedList *) &(linked),                                   \
+            (Iterator *)   &(iterator),                                 \
+            (cmp)                                                       \
+        );                                                              \
+        (iterator);                                                     \
     })
 
-
-#define LINKED_LIST_END(linked, iterator)	\
-  __extension__ ({				\
-      LinkedList_end((LinkedList *) &(linked), (Iterator *) &(iterator)); \
-      (iterator);							\
+#define _LINKED_LIST_BEGIN_1(linked, iterator)                          \
+    __extension__ ({                                                    \
+        LinkedList_begin(                                               \
+            (LinkedList *) &(linked),                                   \
+            (Iterator *)   &(iterator),                                 \
+            ITERATOR_GENERIC_CMP_FUNC(iterator)				\
+        );                                                              \
+        (iterator);                                                     \
     })
 
+#define _LINKED_LIST_END_2(linked, iterator, cmp)                       \
+    __extension__ ({                                                    \
+        LinkedList_end(                                                 \
+            (LinkedList *) &(linked),                                   \
+            (Iterator *)   &(iterator),                                 \
+            (cmp)                                                       \
+        );                                                              \
+        (iterator);                                                     \
+    })
 
-typedef struct Node_st {
-  struct Node_st *next, *prev;
-  const uint8_t *data_ptr;
-  // the data will go here ...
-} Node;
+#define _LINKED_LIST_END_1(linked, iterator)                            \
+    __extension__ ({                                                    \
+        LinkedList_end(                                                 \
+            (LinkedList *) &(linked),                                   \
+            (Iterator *)   &(iterator),                                 \
+            ITERATOR_GENERIC_CMP_FUNC(iterator)                              \
+        );                                                              \
+        (iterator);                                                     \
+    })
 
-typedef struct {
-  Node *head, *tail;
-  uint32_t type_size, size;
-} LinkedList;
+#define _LINKED_LIST_PICK(_1, _2, _3, NAME, ...) NAME
+
+#define LINKED_LIST_BEGIN(linked, iterator, ...)                        \
+    _LINKED_LIST_PICK(                                                  \
+        linked, iterator, ##__VA_ARGS__,                                \
+        _LINKED_LIST_BEGIN_2,                                           \
+        _LINKED_LIST_BEGIN_1                                            \
+    )(linked, iterator, ##__VA_ARGS__)
+
+#define LINKED_LIST_END(linked, iterator, ...)                          \
+    _LINKED_LIST_PICK(                                                  \
+        linked, iterator, ##__VA_ARGS__,                                \
+        _LINKED_LIST_END_2,                                             \
+        _LINKED_LIST_END_1                                              \
+    )(linked, iterator, ##__VA_ARGS__)
 
 
+#define LINKED_LIST_BEGIN(linked, iterator, ...)                        \
+    _LINKED_LIST_PICK(                                                  \
+        linked, iterator, ##__VA_ARGS__,                                \
+        _LINKED_LIST_BEGIN_2,                                           \
+        _LINKED_LIST_BEGIN_1                                            \
+    )(linked, iterator, ##__VA_ARGS__)
+
+#define LINKED_LIST_END(linked, iterator, ...)                          \
+    _LINKED_LIST_PICK(                                                  \
+        linked, iterator, ##__VA_ARGS__,                                \
+        _LINKED_LIST_END_2,                                             \
+        _LINKED_LIST_END_1                                              \
+    )(linked, iterator, ##__VA_ARGS__)
+
+
+typedef struct LinkedList LinkedList;
 
 extern void LinkedList_init(LinkedList *linked, uint32_t type_size);
 extern const uint8_t *LinkedList_front(LinkedList *linked);
@@ -102,8 +151,8 @@ extern void LinkedList_pop_back(LinkedList *linked);
 extern void LinkedList_pop_front(LinkedList *linked);
 extern void LinkedList_clear(LinkedList *linked);
 extern void LinkedList_destroy(LinkedList *linked);
-extern void LinkedList_begin(LinkedList *linked, Iterator *iterator);
-extern void LinkedList_end(LinkedList *linked, Iterator *iterator);
+extern void LinkedList_begin(LinkedList *linked, Iterator *iterator, int (* const cmp)(Iterator *, Iterator *));
+extern void LinkedList_end(LinkedList *linked, Iterator *iterator, int (* const cmp)(Iterator *, Iterator *));
 
 
 #endif /* LINKED_INCLUDED */

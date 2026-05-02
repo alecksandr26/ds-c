@@ -5,8 +5,6 @@
 
 void test_capacity_growth(void)
 {
-
-  
   VEC(int) vec = VEC_INIT(vec, 2);
 
   
@@ -60,17 +58,67 @@ void test_basic_func(void)
 
   assert(4 == VEC_GET(vec, 0));
   assert(3 == VEC_GET(vec, 1));
+
   assert(2 == VEC_GET(vec, 2));  
   
   VEC_CLEAR(vec);
 }
 
 
+
+void test_iterator_vec(void)
+{
+  VEC(int) vec = VEC_INIT(vec);
+  int arr[] = {10, 12, 13};
+
+  VEC_PUSH_BACK(vec, arr[0]);
+  VEC_PUSH_BACK(vec, arr[1]);
+  VEC_PUSH_BACK(vec, arr[2]);
+
+
+  ITERATOR(int) it = VEC_BEGIN(vec, it);
+  
+  assert(ITERATOR_GET_DATA(it) == 10);
+
+  ITERATOR_INC(it);
+
+  assert(ITERATOR_GET_DATA(it) == 12);
+
+  ITERATOR_INC(it);
+  
+  assert(ITERATOR_GET_DATA(it) == 13);
+  
+  ITERATOR_INC(it);
+
+  assert(ITERATOR_IS_NULL(it) == true);
+  
+  assert(it.index >= vec.size);
+
+  ITERATOR(int) end = VEC_END(vec, end);
+
+  assert(ITERATOR_GET_DATA(end) == 13);
+
+  assert(ITERATOR_CMP(end, it) < 0);
+
+
+  VEC_BEGIN(vec, it);
+  while (!ITERATOR_IS_NULL(it)) {
+    assert(ITERATOR_GET_DATA(it) == arr[it.index]);
+    ITERATOR_INC(it);
+  }
+
+  VEC_BEGIN(vec, it);
+  while (ITERATOR_CMP(end, it) >= 0) {
+    assert(ITERATOR_GET_DATA(it) == arr[it.index]);
+    ITERATOR_INC(it);
+  }
+}
+
 int main(void)
 {
-
-  // test_basic_func();   
+  test_basic_func();   
   test_capacity_growth();
+  test_iterator_vec();
   
   return 0;
 }

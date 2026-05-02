@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <except/assert.h>
 
@@ -56,9 +55,8 @@ int main(void)
   LINKED_LIST_PUSH_BACK(list_int, 13);
 
   LINKED_LIST_DESTROY(list_int);
-  
-  assert(((uint64_t) list_int.foo_ptr) == 1);
 
+  assert(list_int.state == DS_STATE_DESTROYED);
 
   LINKED_LIST_INIT(list_int);
 
@@ -68,33 +66,33 @@ int main(void)
   LINKED_LIST_PUSH_BACK(list_int, 12);
   LINKED_LIST_PUSH_BACK(list_int, 13);
 
-
+  
   ITERATOR(int) it = LINKED_LIST_BEGIN(list_int, it);
   ITERATOR(int) end = LINKED_LIST_END(list_int, end);
 
-
   while (ITERATOR_CMP(end, it) >= 0) {
-    
     ITERATOR_INC(it);
   }
   
-  
-  assert(it.iterator_st.index == 0);
-  assert(it.iterator_st.index_ptr == list_int.tail);
+  assert(it.index == list_int.size);
+  assert(it.index_ptr == NULL);
 
+  // Reset the beging
+  LINKED_LIST_BEGIN(list_int, it);
+  
   assert(ITERATOR_GET_DATA(it) == 10);
   
   ITERATOR_INC(it);
 
-  assert(it.iterator_st.index == 1);
+  assert(it.index == 1);
   assert(ITERATOR_GET_DATA(it) == 12);
 
 
   ITERATOR_DEC(it);
 
 
-  assert(it.iterator_st.index == 0);
-  assert(it.iterator_st.index_ptr == list_int.tail);
+  assert(it.index == 0);
+  assert(it.index_ptr == list_int.tail);
 
   assert(ITERATOR_GET_DATA(it) == 10);
 
@@ -102,7 +100,7 @@ int main(void)
   ITERATOR_INC(it);
   ITERATOR_INC(it);
 
-  assert(it.iterator_st.index == 2);
+  assert(it.index == 2);
   assert(ITERATOR_GET_DATA(it) == 13);
   
   
