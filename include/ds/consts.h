@@ -1,7 +1,9 @@
 #ifndef CONSTS_INCLUDED
 #define CONSTS_INCLUDED
 
-// TODO: Add the container default capacity of 256 bytes
+#ifndef DEFAULT_VEC_CAPACITY
+#define DEFAULT_VEC_CAPACITY 256
+#endif
 
 typedef enum {
   DS_STATE_ALIVE = 0,
