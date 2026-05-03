@@ -17,21 +17,28 @@ void Iterator_basic_validations(Iterator *iterator)
 void Iterator_init(
   Iterator        *iterator,
   const uint8_t   *ds,
-  uint8_t   *index_ptr,
+  uint8_t         *index_ptr,
   uint32_t         index,
   void           (* const inc)     (Iterator *),
   void           (* const dec)     (Iterator *),
   const uint8_t *(* const get_data)(Iterator *),
   void           (* const move_at) (Iterator *, uint32_t),
+  void           (* const insert)  (Iterator *, const uint8_t *),
+  void           (* const remove)  (Iterator *),
+  void           (* const replace) (Iterator *, const uint8_t *),
   int            (* const cmp)     (Iterator *, Iterator *)
 )
 {
   if (iterator == NULL) RAISE(ExceptInvalidArgument, "Iterator pointer can't be NULL");
-  if (ds == NULL) RAISE(ExceptUninitializedIterator, "Data structure pointer (ds) can't be NULL");
+  if (ds == NULL) RAISE(ExceptInvalidArgument, "Data structure pointer (ds) can't be NULL");
   if (inc == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'inc' can't be NULL");
   if (dec == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'dec' can't be NULL");
   if (get_data == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'get_data' can't be NULL");
   if (move_at == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'move_at' can't be NULL");
+  if (insert == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'insert' can't be NULL");
+  if (remove == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'remove' can't be NULL");
+  if (replace == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'replace' can't be NULL");
+  if (cmp == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'cmp' can't be NULL");
 
   iterator->ds        = ds;
   iterator->index_ptr = index_ptr;
@@ -40,6 +47,9 @@ void Iterator_init(
   iterator->dec       = dec;
   iterator->get_data  = get_data;
   iterator->move_at   = move_at;
+  iterator->insert    = insert;
+  iterator->remove    = remove;
+  iterator->replace   = replace;
   iterator->cmp       = cmp;
 }
 

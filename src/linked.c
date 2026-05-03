@@ -187,9 +187,6 @@ void LinkedList_destroy(LinkedList *linked)
 {
   LinkedList_basic_validations(linked);
 
-  assert(linked->head != NULL);
-  assert(linked->tail != NULL);
-  
   while (linked->head) {
     Node *prev = linked->head->prev;
     ds_mem_free(linked->head);
@@ -206,6 +203,7 @@ static void LinkedList_Iterator_inc(Iterator *iterator)
 {
   Iterator_basic_validations(iterator);
   LinkedList *linked = (LinkedList *) iterator->ds;
+  LinkedList_basic_validations(linked);
   
   if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty linked list");
   if (iterator->index > linked->size) RAISE(ExceptInvalidArgument, "Invalid Iterator");
@@ -220,6 +218,7 @@ static void LinkedList_Iterator_dec(Iterator *iterator)
 {
   Iterator_basic_validations(iterator);
   LinkedList *linked = (LinkedList *) iterator->ds;
+  LinkedList_basic_validations(linked);
 
   if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty linked list");
   if (iterator->index > linked->size) RAISE(ExceptInvalidArgument, "Can't iterate; already pass the bottom");
@@ -233,6 +232,7 @@ static const uint8_t *LinkedList_Iterator_get_data(Iterator *iterator)
 {
   Iterator_basic_validations(iterator);
   LinkedList *linked = (LinkedList *) iterator->ds;
+  LinkedList_basic_validations(linked);
 
   if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty linked list");
   // We must to return NULL if we have some null iterator
@@ -246,6 +246,7 @@ static void LinkedList_Iterator_move_at(Iterator *iterator, uint32_t index)
 {
   Iterator_basic_validations(iterator);
   LinkedList *linked = (LinkedList *) iterator->ds;
+  LinkedList_basic_validations(linked);
 
   if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty linked list");
   if (index >= linked->size) RAISE(ExceptInvalidIndex, "Index out of bounds");
@@ -259,6 +260,76 @@ static void LinkedList_Iterator_move_at(Iterator *iterator, uint32_t index)
     for (uint32_t i = 0; i < index; i++)
       LinkedList_Iterator_inc(iterator);
   }
+}
+
+
+static void LinkedList_Iterator_insert(Iterator *iterator, const uint8_t *new_value)
+{
+  Iterator_basic_validations(iterator);
+  LinkedList *linked = (LinkedList *) iterator->ds;
+  LinkedList_basic_validations(linked);
+
+  if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Invalid Iterator");
+
+  Node *new_node = ds_mem_alloc(sizeof(Node) + linked->type_size);
+  if (new_node == NULL) RAISE(ExceptBadAlloc, "Null alloc with the defined ds_mem_alloc");
+  new_node->next = new_node->prev = NULL;
+  new_node->data_ptr = (uint8_t *) (new_node + 1);
+  ds_mem_copy((uint8_t *) new_node->data_ptr, new_value, linked->type_size);
+
+  new_node->next = (Node *) iterator->index_ptr;  
+  if (((Node *) iterator->index_ptr)->prev) {
+    new_node->prev = ((Node *) iterator->index_ptr)->prev;
+    ((Node *) iterator->index_ptr)->prev = new_node;
+  }
+
+  if (linked->tail == (Node *) iterator->index_ptr) {
+    linked->tail = new_node;
+  }
+    
+  linked->size++;
+}
+
+static void LinkedList_Iterator_remove(Iterator *iterator)
+{
+  Iterator_basic_validations(iterator);
+  LinkedList *linked = (LinkedList *) iterator->ds;
+  LinkedList_basic_validations(linked);
+
+  if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't removed anything from an empty linked list");
+  
+  if (((Node *) iterator->index_ptr)->next) {
+    ((Node *) iterator->index_ptr)->next->prev = ((Node *) iterator->index_ptr)->prev;
+  }
+
+  if (((Node *) iterator->index_ptr)->prev) {
+    ((Node *) iterator->index_ptr)->prev->next = ((Node *) iterator->index_ptr)->next;
+  }
+
+  if (linked->head == (Node *) iterator->index_ptr) {
+    linked->head = ((Node *) iterator->index_ptr)->prev;
+  }
+  
+  if (linked->tail == (Node *) iterator->index_ptr) {
+    linked->tail = ((Node *) iterator->index_ptr)->next;
+  }
+
+  linked->size--;
+}
+
+static void LinkedList_Iterator_replace(Iterator *iterator, const uint8_t *new_value)
+{
+  Iterator_basic_validations(iterator);
+  LinkedList *linked = (LinkedList *) iterator->ds;
+  LinkedList_basic_validations(linked);
+
+  if (linked->size == 0) RAISE(ExceptEmptyDataStructure, "Can't replaced anything from an empty linked list");
+  
+  ds_mem_copy(
+    (uint8_t *) ((Node *) iterator->index_ptr)->data_ptr,
+    new_value,
+    linked->type_size
+  );
 }
 
 void LinkedList_begin(LinkedList *linked, Iterator *iterator, int (* const cmp)(Iterator *, Iterator *))
@@ -277,6 +348,9 @@ void LinkedList_begin(LinkedList *linked, Iterator *iterator, int (* const cmp)(
     &LinkedList_Iterator_dec,
     &LinkedList_Iterator_get_data,
     &LinkedList_Iterator_move_at,
+    &LinkedList_Iterator_insert,
+    &LinkedList_Iterator_remove,
+    &LinkedList_Iterator_replace,
     cmp
   );
 }
@@ -297,6 +371,9 @@ void LinkedList_end(LinkedList *linked, Iterator *iterator, int (* const cmp)(It
     &LinkedList_Iterator_dec,
     &LinkedList_Iterator_get_data,
     &LinkedList_Iterator_move_at,
+    &LinkedList_Iterator_insert,
+    &LinkedList_Iterator_remove,
+    &LinkedList_Iterator_replace,
     cmp
   );
 }

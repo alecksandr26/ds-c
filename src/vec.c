@@ -6,7 +6,6 @@
 #include "../include/ds/ds_mem.h"
 #include "../include/ds/ds_exception.h"
 
-
 // Include the private implemenations of the linked list
 #define ITERATOR_INTERNAL
 #undef ITERATOR_INCLUDED
@@ -30,7 +29,6 @@ static DS_State Vec_get_state(Vec *vec)
   return vec->state;
 }
 
-
 static void Vec_basic_validations(Vec *vec)
 {
   if (vec == NULL) RAISE(ExceptInvalidArgument, "Vec can't be null");
@@ -39,7 +37,7 @@ static void Vec_basic_validations(Vec *vec)
 
 void Vec_init(Vec *vec, uint32_t capacity, uint32_t type_size)
 {
-  Vec_basic_validations(vec);
+  if (vec == NULL) RAISE(ExceptInvalidArgument, "Vec can't be null");
   if (capacity == 0) RAISE(ExceptInvalidArgument, "Capacity can't be zero");
   if (type_size == 0) RAISE(ExceptInvalidArgument, "TypeSize can't be zero");
   
@@ -49,9 +47,10 @@ void Vec_init(Vec *vec, uint32_t capacity, uint32_t type_size)
   
   vec->container.buff = ds_mem_alloc(capacity * type_size);
   if (vec->container.buff == NULL) RAISE(ExceptBadAlloc, "Null alloc with the defined ds_mem_alloc");
+  Vec_set_state(vec, DS_STATE_ALIVE);
 }
 
-void Vec_push_back(Vec *vec, uint8_t *new_val)
+void Vec_push_back(Vec *vec, const uint8_t *new_val)
 {
   Vec_basic_validations(vec);
   if (new_val == NULL) RAISE(ExceptInvalidArgument, "NewVal can't be null");
@@ -65,8 +64,17 @@ void Vec_push_back(Vec *vec, uint8_t *new_val)
     if (vec->container.buff == NULL) RAISE(ExceptBadAlloc, "Null alloc with the defined ds_mem_alloc");
     vec->container.capacity *= 2;
   }
-  ds_mem_copy(vec->container.buff + vec->container.size * vec->container.type_size, new_val, vec->container.type_size);
+  ds_mem_copy(
+    vec->container.buff + vec->container.size * vec->container.type_size,
+    new_val,
+    vec->container.type_size
+  );
   vec->container.size++;
+}
+
+void Vec_push_front(Vec *vec, const uint8_t *new_val)
+{
+  Vec_insert(vec, 0, new_val);
 }
 
 uint8_t *Vec_pop_back(Vec *vec)
@@ -86,6 +94,22 @@ uint8_t *Vec_pop_back(Vec *vec)
   return vec->container.buff + (--vec->container.size) * vec->container.type_size;
 }
 
+uint8_t *Vec_pop_front(Vec *vec)
+{
+  Vec_basic_validations(vec);
+  if (vec->container.buff == NULL) RAISE(ExceptInvalidArgument, "Container.Buff can't be null");
+  if (vec->container.capacity == 0) RAISE(ExceptInvalidArgument, "Capacity can't be zero");
+  if (vec->container.type_size == 0) RAISE(ExceptInvalidArgument, "TypeSize can't be zero");
+  if (vec->container.size == 0) RAISE(ExceptEmptyDataStructure, "Can't pop an element in an empty vector");
+
+  ds_mem_copy(
+    vec->container.buff + vec->container.size * vec->container.type_size,
+    vec->container.buff,
+    vec->container.type_size
+  );
+  Vec_remove(vec, 0);
+  return vec->container.buff + (vec->container.size + 1) * vec->container.type_size;
+}
 
 uint8_t *Vec_get(Vec *vec, uint32_t index)
 {
@@ -98,7 +122,7 @@ uint8_t *Vec_get(Vec *vec, uint32_t index)
   return vec->container.buff + index * vec->container.type_size;
 }
 
-void Vec_insert(Vec *vec, uint32_t index, uint8_t *new_val)
+void Vec_insert(Vec *vec, uint32_t index, const uint8_t *new_val)
 {
   Vec_basic_validations(vec);
   if (vec->container.size <= index) RAISE(ExceptInvalidArgument, "Invalid index");
@@ -145,6 +169,23 @@ void Vec_remove(Vec *vec, uint32_t index)
   vec->container.size--;
 }
 
+void Vec_replace(Vec *vec, uint32_t index, const uint8_t *new_value)
+{
+  Vec_basic_validations(vec);
+  if (vec->container.buff == NULL) RAISE(ExceptInvalidArgument, "Container.Buff can't be null");
+  if (vec->container.capacity == 0) RAISE(ExceptInvalidArgument, "Capacity can't be zero");
+  if (vec->container.type_size == 0) RAISE(ExceptInvalidArgument, "TypeSize can't be zero");
+  if (vec->container.size == 0) RAISE(ExceptEmptyDataStructure, "Can't replace an element in an empty vector");
+  if (vec->container.size <= index) RAISE(ExceptInvalidIndex, "Index out of bounds");
+  if (new_value == NULL) RAISE(ExceptInvalidArgument, "Data can't be null");
+  
+  ds_mem_copy(
+    vec->container.buff + index * vec->container.type_size,
+    new_value,
+    vec->container.type_size
+  );
+}
+
 void Vec_clear(Vec *vec)
 {
   Vec_basic_validations(vec);
@@ -174,6 +215,7 @@ static void Vec_Iterator_inc(Iterator *iterator)
 {
   Iterator_basic_validations(iterator);
   Vec *vec = (Vec *) iterator->ds;
+  Vec_basic_validations(vec);
 
   if (vec->container.size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty vector");
   if (iterator->index > vec->container.size) RAISE(ExceptInvalidArgument, "Invalid Iterator");
@@ -188,6 +230,7 @@ static void Vec_Iterator_dec(Iterator *iterator)
 {
   Iterator_basic_validations(iterator);
   Vec *vec = (Vec *) iterator->ds;
+  Vec_basic_validations(vec);
   
   if (vec->container.size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty vector");
   if (iterator->index > vec->container.size) RAISE(ExceptInvalidArgument, "Can't iterate; already pass the bottom");
@@ -201,32 +244,60 @@ static const uint8_t *Vec_Iterator_get_data(Iterator *iterator)
 {
   Iterator_basic_validations(iterator);
   Vec *vec = (Vec *) iterator->ds;
+  Vec_basic_validations(vec);
 
   if (vec->container.size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty vector");
   // We must to return NULL if we have some null iterator
   if (iterator->index >= vec->container.size)
     return NULL;
 
-  return vec->container.buff + (vec->container.type_size * iterator->index);
+  return iterator->index_ptr;
 }
 
 static void Vec_Iterator_move_at(Iterator *iterator, uint32_t index)
 {
   Iterator_basic_validations(iterator);
   Vec *vec = (Vec *) iterator->ds;
+  Vec_basic_validations(vec);
   
   if (vec->container.size == 0) RAISE(ExceptEmptyDataStructure, "Can't iterate in an empty vector");
   if (iterator->index >= vec->container.size) RAISE(ExceptInvalidIndex, "Index out of bounds");
 
-  if (index > vec->container.size / 2) {
-    Vec_begin(vec, iterator, iterator->cmp);
-    for (uint32_t i = vec->container.size - 1; i > index; i--)
-      Vec_Iterator_dec(iterator);
+  iterator->index = index;
+  iterator->index_ptr = vec->container.buff + index * vec->container.type_size;
+}
+
+static void Vec_Iterator_insert(Iterator *iterator, const uint8_t *new_value)
+{
+  Iterator_basic_validations(iterator);
+  Vec *vec = (Vec *) iterator->ds;
+  Vec_basic_validations(vec);
+  Vec_insert(vec, iterator->index, new_value);
+}
+
+static void Vec_Iterator_remove(Iterator *iterator)
+{
+  Iterator_basic_validations(iterator);
+  Vec *vec = (Vec *) iterator->ds;
+  Vec_basic_validations(vec);
+
+  Vec_remove(vec, iterator->index);
+  /* If we removed the last element or the iterator is now past the end
+   * set it to null/exhausted state */
+  if (vec->container.size == 0 || iterator->index >= vec->container.size) {
+    iterator->index_ptr = NULL;
   } else {
-    Vec_end(vec, iterator, iterator->cmp);
-    for (uint32_t i = 0; i < index; i++)
-      Vec_Iterator_inc(iterator);
+    iterator->index_ptr = (uint8_t *)
+      (vec->container.buff + iterator->index * vec->container.type_size);
   }
+}
+
+static void Vec_Iterator_replace(Iterator *iterator, const uint8_t *new_value)
+{
+  Iterator_basic_validations(iterator);
+  Vec *vec = (Vec *) iterator->ds;
+  Vec_basic_validations(vec);
+  Vec_replace(vec, iterator->index, new_value);
 }
 
 void Vec_begin(Vec *vec, Iterator *iterator, int (*const cmp)(Iterator *, Iterator *))
@@ -245,6 +316,9 @@ void Vec_begin(Vec *vec, Iterator *iterator, int (*const cmp)(Iterator *, Iterat
     &Vec_Iterator_dec,
     &Vec_Iterator_get_data,
     &Vec_Iterator_move_at,
+    &Vec_Iterator_insert,
+    &Vec_Iterator_remove,
+    &Vec_Iterator_replace,
     cmp
   );
 }
@@ -266,6 +340,9 @@ void Vec_end(Vec *vec, Iterator *iterator, int (*const cmp)(Iterator *, Iterator
     &Vec_Iterator_dec,
     &Vec_Iterator_get_data,
     &Vec_Iterator_move_at,
+    &Vec_Iterator_insert,
+    &Vec_Iterator_remove,
+    &Vec_Iterator_replace,
     cmp
   );
 }

@@ -13,6 +13,9 @@
     void (* const dec)(Iterator *iterator);				\
     const uint8_t *(* const get_data)(Iterator *iterator);		\
     void (* const move_at)(Iterator *iterator, uint32_t index);		\
+    void (* const insert)(Iterator *iterator, const uint8_t *data);	\
+    void (* const remove)(Iterator *iterator);				\
+    void (* const replace)(Iterator *iterator, const uint8_t *data);	\
     int (* const cmp)(Iterator *iterator_a, Iterator *iterator_b);	\
     type *foo_ptr;							\
   }
@@ -40,6 +43,21 @@
 
 #define ITERATOR_IS_NULL(iterator)				\
   ((iterator).get_data((Iterator *) &(iterator)) == NULL)
+
+#define ITERATOR_INSERT(iterator, new_value)				\
+  __extension__ ({							\
+      typeof(*(iterator).foo_ptr) __ds_vec_insert_element = (new_value); \
+      (iterator).insert((Iterator *) &(iterator), (const uint8_t *) &__ds_vec_insert_element); \
+    })
+
+#define ITERATOR_REMOVE(iterator)		\
+  (iterator).remove((Iterator *) &(iterator))
+
+#define ITERATOR_REPLACE(iterator, new_value)				\
+  __extension__ ({							\
+      typeof(*(iterator).foo_ptr) __ds_vec_insert_element = (new_value); \
+      (iterator).replace((Iterator *) &(iterator), (const uint8_t *) &__ds_vec_insert_element); \
+    })
 
 
 #define ITERATOR_CMP(iterator_a, iterator_b)                            \
@@ -100,6 +118,9 @@ struct Iterator {
   void (*dec)(Iterator *iterator);
   const uint8_t *(*get_data)(Iterator *iterator);
   void (*move_at)(Iterator *iterator, uint32_t index);
+  void (*insert)(Iterator *iterator, const uint8_t *data);
+  void (*remove)(Iterator *iterator);
+  void (*replace)(Iterator *iterator, const uint8_t *data);
   int (*cmp)(Iterator *iterator_a, Iterator *iterator_b);
 };
 
@@ -112,6 +133,9 @@ extern void Iterator_init(
   void           (* const dec)     (Iterator *),
   const uint8_t *(* const get_data)(Iterator *),
   void           (* const move_at) (Iterator *, uint32_t),
+  void           (* const insert)(Iterator *, const uint8_t *),
+  void           (* const remove)(Iterator *),
+  void           (* const replace)(Iterator *, const uint8_t *),
   int            (* const cmp)     (Iterator *, Iterator *));
 
 extern void Iterator_basic_validations(Iterator *iterator);

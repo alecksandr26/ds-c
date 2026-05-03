@@ -31,15 +31,15 @@
 #define LINKED_LIST_BACK(linked)					\
   (*((typeof((linked).foo_ptr)) LinkedList_back((LinkedList *) &(linked))))
 
-#define LINKED_LIST_PUSH_BACK(linked, new_val)	\
-  __extension__ ({				\
+#define LINKED_LIST_PUSH_BACK(linked, new_val)				\
+  __extension__ ({							\
       typeof(*(linked).foo_ptr) __ds_linked_new_element = (new_val);	\
       LinkedList_push_back((LinkedList *) &(linked), (const uint8_t *) &__ds_linked_new_element); \
     })
 
 
-#define LINKED_LIST_PUSH_FRONT(linked, new_val)	\
-  __extension__ ({				\
+#define LINKED_LIST_PUSH_FRONT(linked, new_val)				\
+  __extension__ ({							\
       typeof(*(linked).foo_ptr) __ds_linked_new_element = (new_val);	\
       LinkedList_push_front((LinkedList *) &(linked), (const uint8_t *) &__ds_linked_new_element); \
     })
@@ -61,83 +61,116 @@
     })
 
 
-#define LINKED_LIST_CLEAR(linked) \
+#define LINKED_LIST_CLEAR(linked)		\
   LinkedList_clear((LinkedList *) &(linked))
 
-#define LINKED_LIST_DESTROY(linked) \
+#define LINKED_LIST_DESTROY(linked)		\
   LinkedList_destroy((LinkedList *) &(linked))
 
 
-#define _LINKED_LIST_BEGIN_2(linked, iterator, cmp)                     \
-    __extension__ ({                                                    \
-        LinkedList_begin(                                               \
-            (LinkedList *) &(linked),                                   \
-            (Iterator *)   &(iterator),                                 \
-            (cmp)                                                       \
-        );                                                              \
-        (iterator);                                                     \
+#define _LINKED_LIST_BEGIN_2(linked, iterator, cmp)	\
+  __extension__ ({					\
+      LinkedList_begin(					\
+	(LinkedList *) &(linked),			\
+	(Iterator *)   &(iterator),			\
+	(cmp)						\
+      );						\
+      (iterator);					\
     })
 
-#define _LINKED_LIST_BEGIN_1(linked, iterator)                          \
-    __extension__ ({                                                    \
-        LinkedList_begin(                                               \
-            (LinkedList *) &(linked),                                   \
-            (Iterator *)   &(iterator),                                 \
-            ITERATOR_GENERIC_CMP_FUNC(iterator)				\
-        );                                                              \
-        (iterator);                                                     \
+#define _LINKED_LIST_BEGIN_1(linked, iterator)	\
+  __extension__ ({				\
+      LinkedList_begin(				\
+	(LinkedList *) &(linked),		\
+	(Iterator *)   &(iterator),		\
+	ITERATOR_GENERIC_CMP_FUNC(iterator)	\
+      );					\
+      (iterator);				\
     })
 
-#define _LINKED_LIST_END_2(linked, iterator, cmp)                       \
-    __extension__ ({                                                    \
-        LinkedList_end(                                                 \
-            (LinkedList *) &(linked),                                   \
-            (Iterator *)   &(iterator),                                 \
-            (cmp)                                                       \
-        );                                                              \
-        (iterator);                                                     \
+#define _LINKED_LIST_END_2(linked, iterator, cmp)	\
+  __extension__ ({					\
+      LinkedList_end(					\
+	(LinkedList *) &(linked),			\
+	(Iterator *)   &(iterator),			\
+	(cmp)						\
+      );						\
+      (iterator);					\
     })
 
-#define _LINKED_LIST_END_1(linked, iterator)                            \
-    __extension__ ({                                                    \
-        LinkedList_end(                                                 \
-            (LinkedList *) &(linked),                                   \
-            (Iterator *)   &(iterator),                                 \
-            ITERATOR_GENERIC_CMP_FUNC(iterator)                              \
-        );                                                              \
-        (iterator);                                                     \
+#define _LINKED_LIST_END_1(linked, iterator)	\
+  __extension__ ({				\
+      LinkedList_end(				\
+	(LinkedList *) &(linked),		\
+	(Iterator *)   &(iterator),		\
+	ITERATOR_GENERIC_CMP_FUNC(iterator)	\
+      );					\
+      (iterator);				\
     })
 
 #define _LINKED_LIST_PICK(_1, _2, _3, NAME, ...) NAME
 
-#define LINKED_LIST_BEGIN(linked, iterator, ...)                        \
-    _LINKED_LIST_PICK(                                                  \
-        linked, iterator, ##__VA_ARGS__,                                \
-        _LINKED_LIST_BEGIN_2,                                           \
-        _LINKED_LIST_BEGIN_1                                            \
-    )(linked, iterator, ##__VA_ARGS__)
+#define LINKED_LIST_BEGIN(linked, iterator, ...)	\
+  _LINKED_LIST_PICK(					\
+    linked, iterator, ##__VA_ARGS__,			\
+    _LINKED_LIST_BEGIN_2,				\
+    _LINKED_LIST_BEGIN_1				\
+  )(linked, iterator, ##__VA_ARGS__)
 
-#define LINKED_LIST_END(linked, iterator, ...)                          \
-    _LINKED_LIST_PICK(                                                  \
-        linked, iterator, ##__VA_ARGS__,                                \
-        _LINKED_LIST_END_2,                                             \
-        _LINKED_LIST_END_1                                              \
-    )(linked, iterator, ##__VA_ARGS__)
+#define LINKED_LIST_END(linked, iterator, ...)	\
+  _LINKED_LIST_PICK(				\
+    linked, iterator, ##__VA_ARGS__,		\
+    _LINKED_LIST_END_2,				\
+    _LINKED_LIST_END_1				\
+  )(linked, iterator, ##__VA_ARGS__)
 
 
-#define LINKED_LIST_BEGIN(linked, iterator, ...)                        \
-    _LINKED_LIST_PICK(                                                  \
-        linked, iterator, ##__VA_ARGS__,                                \
-        _LINKED_LIST_BEGIN_2,                                           \
-        _LINKED_LIST_BEGIN_1                                            \
-    )(linked, iterator, ##__VA_ARGS__)
+#define LINKED_LIST_BEGIN(linked, iterator, ...)	\
+  _LINKED_LIST_PICK(					\
+    linked, iterator, ##__VA_ARGS__,			\
+    _LINKED_LIST_BEGIN_2,				\
+    _LINKED_LIST_BEGIN_1				\
+  )(linked, iterator, ##__VA_ARGS__)
 
-#define LINKED_LIST_END(linked, iterator, ...)                          \
-    _LINKED_LIST_PICK(                                                  \
-        linked, iterator, ##__VA_ARGS__,                                \
-        _LINKED_LIST_END_2,                                             \
-        _LINKED_LIST_END_1                                              \
-    )(linked, iterator, ##__VA_ARGS__)
+#define LINKED_LIST_END(linked, iterator, ...)	\
+  _LINKED_LIST_PICK(				\
+    linked, iterator, ##__VA_ARGS__,		\
+    _LINKED_LIST_END_2,				\
+    _LINKED_LIST_END_1				\
+  )(linked, iterator, ##__VA_ARGS__)
+
+
+#define _LINKED_LIST_GET_ITERATOR_AT_2(linked, iterator, index, cmp)    \
+  __extension__ ({							\
+      LinkedList_begin(							\
+	(LinkedList *) &(linked),					\
+	(Iterator *) &(iterator),					\
+	(cmp)								\
+      );								\
+      ITERATOR_MOVE_AT(iterator, index);				\
+      (iterator);							\
+    })
+
+#define _LINKED_LIST_GET_ITERATOR_AT_1(linked, iterator, index)	\
+  __extension__ ({						\
+      LinkedList_begin(						\
+	(LinkedList *) &(linked),				\
+	(Iterator *) &(iterator),				\
+	ITERATOR_GENERIC_CMP_FUNC(iterator)			\
+      );							\
+      ITERATOR_MOVE_AT(iterator, index);			\
+      (iterator);						\
+    })
+
+#define _LINKED_LIST_GET_ITERATOR_AT_PICK(_1, _2, _3, _4, NAME, ...) NAME
+
+#define LINKED_LIST_GET_ITERATOR_AT(linked, iterator, index, ...)       \
+  _LINKED_LIST_GET_ITERATOR_AT_PICK(					\
+    linked, iterator, index, ##__VA_ARGS__,				\
+    _LINKED_LIST_GET_ITERATOR_AT_2,					\
+    _LINKED_LIST_GET_ITERATOR_AT_1					\
+  )(linked, iterator, index, ##__VA_ARGS__)
+
 
 
 typedef struct LinkedList LinkedList;
