@@ -1,23 +1,30 @@
-#ifndef LINKED_INCLUDED
-#define LINKED_INCLUDED
+#ifndef LINKED_LIST_INCLUDED
+#define LINKED_LIST_INCLUDED
 
 #include <inttypes.h>
+#include <stddef.h>
+#include <stdbool.h>
 
 #include "iterator.h"
 #include "consts.h"
 
-#define LINKED_LIST(type)			\
-  struct {					\
+#define DEFINE_LINKED_LIST_TYPE(type)		\
+  struct ds_linked_list_ ## type ## _t {	\
     const uint8_t *head, *tail;			\
     const uint32_t type_size, size;		\
     const DS_State state;			\
-    const type * const foo_ptr;			\
-  }
+    const type *_foo_type_ptr;			\
+    const LinkedList *_foo_ds_type_ptr;		\
+  };						\
+  typedef struct ds_linked_list_ ## type ## _t ds_linked_list_ ## type ## _t
+
+#define LINKED_LIST(type)			\
+  ds_linked_list_ ## type ## _t
 
 
 #define LINKED_LIST_INIT(linked)					\
   __extension__ ({							\
-      LinkedList_init((LinkedList *) &(linked), sizeof(typeof(*(linked).foo_ptr))); \
+      LinkedList_init((LinkedList *) &(linked), sizeof(typeof(*(linked)._foo_type_ptr))); \
       (linked);								\
     })
 
@@ -26,27 +33,27 @@
 
 
 #define LINKED_LIST_FRONT(linked)					\
-  (*((typeof((linked).foo_ptr)) LinkedList_front((LinkedList *) &(linked))))
+  (*((typeof((linked)._foo_type_ptr)) LinkedList_front((LinkedList *) &(linked))))
 
 #define LINKED_LIST_BACK(linked)					\
-  (*((typeof((linked).foo_ptr)) LinkedList_back((LinkedList *) &(linked))))
+  (*((typeof((linked)._foo_type_ptr)) LinkedList_back((LinkedList *) &(linked))))
 
 #define LINKED_LIST_PUSH_BACK(linked, new_val)				\
   __extension__ ({							\
-      typeof(*(linked).foo_ptr) __ds_linked_new_element = (new_val);	\
+      typeof(*(linked)._foo_type_ptr) __ds_linked_new_element = (new_val);	\
       LinkedList_push_back((LinkedList *) &(linked), (const uint8_t *) &__ds_linked_new_element); \
     })
 
 
 #define LINKED_LIST_PUSH_FRONT(linked, new_val)				\
   __extension__ ({							\
-      typeof(*(linked).foo_ptr) __ds_linked_new_element = (new_val);	\
+      typeof(*(linked)._foo_type_ptr) __ds_linked_new_element = (new_val);	\
       LinkedList_push_front((LinkedList *) &(linked), (const uint8_t *) &__ds_linked_new_element); \
     })
 
 #define LINKED_LIST_POP_BACK(linked)					\
   __extension__ ({							\
-      typeof(*(linked).foo_ptr) __ds_linked_remove_element = LINKED_LIST_BACK(linked); \
+      typeof(*(linked)._foo_type_ptr) __ds_linked_remove_element = LINKED_LIST_BACK(linked); \
       LinkedList_pop_back((LinkedList *) &(linked));			\
       (__ds_linked_remove_element);					\
     })
@@ -55,7 +62,7 @@
 
 #define LINKED_LIST_POP_FRONT(linked)					\
   __extension__ ({							\
-      typeof(*(linked).foo_ptr) __ds_linked_remove_element = LINKED_LIST_FRONT(linked); \
+      typeof(*(linked)._foo_type_ptr) __ds_linked_remove_element = LINKED_LIST_FRONT(linked); \
       LinkedList_pop_front((LinkedList *) &(linked));			\
       (__ds_linked_remove_element);					\
     })
@@ -184,11 +191,47 @@ extern void LinkedList_pop_back(LinkedList *linked);
 extern void LinkedList_pop_front(LinkedList *linked);
 extern void LinkedList_clear(LinkedList *linked);
 extern void LinkedList_destroy(LinkedList *linked);
-extern void LinkedList_begin(LinkedList *linked, Iterator *iterator, int (* const cmp)(Iterator *, Iterator *));
-extern void LinkedList_end(LinkedList *linked, Iterator *iterator, int (* const cmp)(Iterator *, Iterator *));
+extern void LinkedList_begin(LinkedList *linked, Iterator *iterator, int (* const cmp)(const uint8_t *, const uint8_t *));
+extern void LinkedList_end(LinkedList *linked, Iterator *iterator, int (* const cmp)(const uint8_t *, const uint8_t *));
 
 
-#endif /* LINKED_INCLUDED */
+#ifdef LINKED_LIST_PRIVATE
+
+typedef struct Node_st {
+  struct Node_st *next, *prev;
+  const uint8_t *data_ptr;
+  // the data will go here ...
+} Node;
+
+struct LinkedList {
+  Node *head, *tail;
+  uint32_t type_size, size;
+  DS_State state;
+};
+
+#endif
+
+DEFINE_LINKED_LIST_TYPE(int);
+DEFINE_LINKED_LIST_TYPE(long);
+DEFINE_LINKED_LIST_TYPE(short);
+DEFINE_LINKED_LIST_TYPE(int8_t);
+DEFINE_LINKED_LIST_TYPE(int16_t);
+DEFINE_LINKED_LIST_TYPE(int32_t);
+DEFINE_LINKED_LIST_TYPE(int64_t);
+
+DEFINE_LINKED_LIST_TYPE(uint8_t);
+DEFINE_LINKED_LIST_TYPE(uint16_t);
+DEFINE_LINKED_LIST_TYPE(uint32_t);
+DEFINE_LINKED_LIST_TYPE(uint64_t);
+DEFINE_LINKED_LIST_TYPE(size_t);
+
+
+DEFINE_LINKED_LIST_TYPE(float);
+DEFINE_LINKED_LIST_TYPE(double);
+DEFINE_LINKED_LIST_TYPE(bool);
+
+
+#endif /* LINKED_LIST_INCLUDED */
 
 
 

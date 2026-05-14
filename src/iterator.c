@@ -3,17 +3,16 @@
 
 #include "../include/ds/ds_exception.h"
 
-#define ITERATOR_INTERNAL
+#define ITERATOR_PRIVATE
 #include "../include/ds/iterator.h"
 
 
-void Iterator_basic_validations(Iterator *iterator)
+void Iterator_basic_validations(const Iterator *iterator)
 {
   if (iterator == NULL) RAISE(ExceptInvalidArgument, "Iterator pointer can't be NULL");
   if (iterator->ds == NULL) RAISE(ExceptUninitializedIterator, "Data structure pointer (ds) can't be NULL");
 }
 
-// Iterator_init: We can handle null compare functions
 void Iterator_init(
   Iterator        *iterator,
   const uint8_t   *ds,
@@ -21,24 +20,24 @@ void Iterator_init(
   uint32_t         index,
   void           (* const inc)     (Iterator *),
   void           (* const dec)     (Iterator *),
-  const uint8_t *(* const get_data)(Iterator *),
+  const uint8_t *(* const get_data)(const Iterator *),
   void           (* const move_at) (Iterator *, uint32_t),
   void           (* const insert)  (Iterator *, const uint8_t *),
   void           (* const remove)  (Iterator *),
   void           (* const replace) (Iterator *, const uint8_t *),
-  int            (* const cmp)     (Iterator *, Iterator *)
+  int            (* const cmp)     (const uint8_t *, const uint8_t *)
 )
 {
   if (iterator == NULL) RAISE(ExceptInvalidArgument, "Iterator pointer can't be NULL");
-  if (ds == NULL) RAISE(ExceptInvalidArgument, "Data structure pointer (ds) can't be NULL");
-  if (inc == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'inc' can't be NULL");
-  if (dec == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'dec' can't be NULL");
+  if (ds == NULL)       RAISE(ExceptInvalidArgument, "Data structure pointer (ds) can't be NULL");
+  if (inc == NULL)      RAISE(ExceptInvalidArgument, "Function pointer 'inc' can't be NULL");
+  if (dec == NULL)      RAISE(ExceptInvalidArgument, "Function pointer 'dec' can't be NULL");
   if (get_data == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'get_data' can't be NULL");
-  if (move_at == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'move_at' can't be NULL");
-  if (insert == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'insert' can't be NULL");
-  if (remove == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'remove' can't be NULL");
-  if (replace == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'replace' can't be NULL");
-  if (cmp == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'cmp' can't be NULL");
+  if (move_at == NULL)  RAISE(ExceptInvalidArgument, "Function pointer 'move_at' can't be NULL");
+  if (insert == NULL)   RAISE(ExceptInvalidArgument, "Function pointer 'insert' can't be NULL");
+  if (remove == NULL)   RAISE(ExceptInvalidArgument, "Function pointer 'remove' can't be NULL");
+  if (replace == NULL)  RAISE(ExceptInvalidArgument, "Function pointer 'replace' can't be NULL");
+  if (cmp == NULL)      RAISE(ExceptInvalidArgument, "Function pointer 'cmp' can't be NULL");
 
   iterator->ds        = ds;
   iterator->index_ptr = index_ptr;
@@ -54,119 +53,94 @@ void Iterator_init(
 }
 
 
-void Iterator_set_cmp(Iterator *iterator, int (* const cmp)(Iterator *, Iterator *))
+void Iterator_set_cmp(Iterator *iterator, int (* const cmp)(const uint8_t *, const uint8_t *))
 {
   if (iterator == NULL) RAISE(ExceptInvalidArgument, "Iterator pointer can't be NULL");
-  if (cmp == NULL) RAISE(ExceptInvalidArgument, "Function pointer 'cmp' can't be NULL");
+  if (cmp == NULL)      RAISE(ExceptInvalidArgument, "Function pointer 'cmp' can't be NULL");
   iterator->cmp = cmp;
 }
 
-static void validate_pair(Iterator *a, Iterator *b)
-{
-  Iterator_basic_validations(a);
-  Iterator_basic_validations(b);
-  
-  if (a == NULL || b == NULL)
-    RAISE(ExceptInvalidArgument, "Iterator pointer can't be NULL");
-  if (a->get_data == NULL || b->get_data == NULL)
-    RAISE(ExceptUninitializedIterator, "Iterator has not been initialized");
-}
 
-/* Null return from get_data means exhausted/sentinel iterator */
-int Iterator_cmp_int(Iterator *a, Iterator *b)
+/* ------------------------------------------------------------------ *
+ *  Primitive comparison functions                                      *
+ *  Signature: int cmp(const uint8_t *a, const uint8_t *b)             *
+ *  NULL  pointer → treated as a sentinel / exhausted iterator value:  *
+ *    both NULL → equal (0), left NULL → greater (1), right NULL → less (-1)
+ * ------------------------------------------------------------------ */
+
+int Iterator_cmp_int(const uint8_t *a, const uint8_t *b)
 {
-  validate_pair(a, b);
-  const uint8_t *da = a->get_data(a);
-  const uint8_t *db = b->get_data(b);
-  if (da == NULL && db == NULL) return 0;
-  if (da == NULL) return 1;
-  if (db == NULL) return -1;
-  const int va = *(const int *) da;
-  const int vb = *(const int *) db;
+  if (a == NULL && b == NULL) return  0;
+  if (a == NULL)              return  1;
+  if (b == NULL)              return -1;
+  const int va = *(const int *) a;
+  const int vb = *(const int *) b;
   return (va > vb) - (va < vb);
 }
 
-int Iterator_cmp_long(Iterator *a, Iterator *b)
+int Iterator_cmp_long(const uint8_t *a, const uint8_t *b)
 {
-  validate_pair(a, b);
-  const uint8_t *da = a->get_data(a);
-  const uint8_t *db = b->get_data(b);
-  if (da == NULL && db == NULL) return 0;
-  if (da == NULL) return 1;
-  if (db == NULL) return -1;
-  const long va = *(const long *) da;
-  const long vb = *(const long *) db;
+  if (a == NULL && b == NULL) return  0;
+  if (a == NULL)              return  1;
+  if (b == NULL)              return -1;
+  const long va = *(const long *) a;
+  const long vb = *(const long *) b;
   return (va > vb) - (va < vb);
 }
 
-int Iterator_cmp_short(Iterator *a, Iterator *b)
+int Iterator_cmp_short(const uint8_t *a, const uint8_t *b)
 {
-  validate_pair(a, b);
-  const uint8_t *da = a->get_data(a);
-  const uint8_t *db = b->get_data(b);
-  if (da == NULL && db == NULL) return 0;
-  if (da == NULL) return 1;
-  if (db == NULL) return -1;
-  const short va = *(const short *) da;
-  const short vb = *(const short *) db;
+  if (a == NULL && b == NULL) return  0;
+  if (a == NULL)              return  1;
+  if (b == NULL)              return -1;
+  const short va = *(const short *) a;
+  const short vb = *(const short *) b;
   return (va > vb) - (va < vb);
 }
 
-int Iterator_cmp_uint(Iterator *a, Iterator *b)
+int Iterator_cmp_uint(const uint8_t *a, const uint8_t *b)
 {
-  validate_pair(a, b);
-  const uint8_t *da = a->get_data(a);
-  const uint8_t *db = b->get_data(b);
-  if (da == NULL && db == NULL) return 0;
-  if (da == NULL) return 1;
-  if (db == NULL) return -1;
-  const unsigned int va = *(const unsigned int *) da;
-  const unsigned int vb = *(const unsigned int *) db;
+  if (a == NULL && b == NULL) return  0;
+  if (a == NULL)              return  1;
+  if (b == NULL)              return -1;
+  const unsigned int va = *(const unsigned int *) a;
+  const unsigned int vb = *(const unsigned int *) b;
   return (va > vb) - (va < vb);
 }
 
-int Iterator_cmp_ulong(Iterator *a, Iterator *b)
+int Iterator_cmp_ulong(const uint8_t *a, const uint8_t *b)
 {
-  validate_pair(a, b);
-  const uint8_t *da = a->get_data(a);
-  const uint8_t *db = b->get_data(b);
-  if (da == NULL && db == NULL) return 0;
-  if (da == NULL) return 1;
-  if (db == NULL) return -1;
-  const unsigned long va = *(const unsigned long *) da;
-  const unsigned long vb = *(const unsigned long *) db;
+  if (a == NULL && b == NULL) return  0;
+  if (a == NULL)              return  1;
+  if (b == NULL)              return -1;
+  const unsigned long va = *(const unsigned long *) a;
+  const unsigned long vb = *(const unsigned long *) b;
   return (va > vb) - (va < vb);
 }
 
-int Iterator_cmp_ushort(Iterator *a, Iterator *b)
+int Iterator_cmp_ushort(const uint8_t *a, const uint8_t *b)
 {
-  validate_pair(a, b);
-  const uint8_t *da = a->get_data(a);
-  const uint8_t *db = b->get_data(b);
-  if (da == NULL && db == NULL) return 0;
-  if (da == NULL) return 1;
-  if (db == NULL) return -1;
-  const unsigned short va = *(const unsigned short *) da;
-  const unsigned short vb = *(const unsigned short *) db;
+  if (a == NULL && b == NULL) return  0;
+  if (a == NULL)              return  1;
+  if (b == NULL)              return -1;
+  const unsigned short va = *(const unsigned short *) a;
+  const unsigned short vb = *(const unsigned short *) b;
   return (va > vb) - (va < vb);
 }
 
-int Iterator_cmp_str(Iterator *a, Iterator *b)
+int Iterator_cmp_str(const uint8_t *a, const uint8_t *b)
 {
-  validate_pair(a, b);
-  const uint8_t *da = a->get_data(a);
-  const uint8_t *db = b->get_data(b);
-  if (da == NULL && db == NULL) return 0;
-  if (da == NULL) return 1;
-  if (db == NULL) return -1;
-  const char *va = *(const char **) da;
-  const char *vb = *(const char **) db;
+  if (a == NULL && b == NULL) return  0;
+  if (a == NULL)              return  1;
+  if (b == NULL)              return -1;
+  const char *va = *(const char **) a;
+  const char *vb = *(const char **) b;
   if (va == NULL || vb == NULL)
     RAISE(ExceptInvalidArgument, "String pointer inside iterator can't be NULL");
   return strcmp(va, vb);
 }
 
-int Iterator_cmp_raise_except(Iterator *a, Iterator *b)
+int Iterator_cmp_raise_except(const uint8_t *a, const uint8_t *b)
 {
   (void) a;
   (void) b;

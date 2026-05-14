@@ -11,6 +11,8 @@ void test_init(void)
     int age;
   } Person;
 
+  DEFINE_LINKED_LIST_TYPE(Person);
+
   LINKED_LIST(Person) list = LINKED_LIST_INIT(list);
   assert(list.type_size == sizeof(Person));
   assert(list.head == NULL);

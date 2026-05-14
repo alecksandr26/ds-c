@@ -2,19 +2,16 @@
 #include <stdio.h>
 
 #include "../include/ds/consts.h"
+
+#define VEC_PRIVATE
 #include "../include/ds/vec.h"
 #include "../include/ds/ds_mem.h"
 #include "../include/ds/ds_exception.h"
 
-// Include the private implemenations of the linked list
-#define ITERATOR_INTERNAL
+// Include the private implemenations of the iterator
+#define ITERATOR_PRIVATE
 #undef ITERATOR_INCLUDED
 #include "../include/ds/iterator.h"
-
-struct Vec {
-  Container container;
-  DS_State state;
-};
 
 static void Vec_set_state(Vec *vec, DS_State state)
 {
@@ -40,6 +37,11 @@ void Vec_init(Vec *vec, uint32_t capacity, uint32_t type_size)
   if (vec == NULL) RAISE(ExceptInvalidArgument, "Vec can't be null");
   if (capacity == 0) RAISE(ExceptInvalidArgument, "Capacity can't be zero");
   if (type_size == 0) RAISE(ExceptInvalidArgument, "TypeSize can't be zero");
+  
+  if (vec->container.buff != NULL && Vec_get_state(vec) == DS_STATE_ALIVE) {
+    Vec_clear(vec);
+    return;
+  }
   
   vec->container.capacity = capacity;
   vec->container.size = 0;
@@ -240,7 +242,7 @@ static void Vec_Iterator_dec(Iterator *iterator)
   iterator->index_ptr = (uint8_t *) (vec->container.buff + vec->container.type_size * iterator->index);
 }
 
-static const uint8_t *Vec_Iterator_get_data(Iterator *iterator)
+static const uint8_t *Vec_Iterator_get_data(const Iterator *iterator)
 {
   Iterator_basic_validations(iterator);
   Vec *vec = (Vec *) iterator->ds;
@@ -300,7 +302,7 @@ static void Vec_Iterator_replace(Iterator *iterator, const uint8_t *new_value)
   Vec_replace(vec, iterator->index, new_value);
 }
 
-void Vec_begin(Vec *vec, Iterator *iterator, int (*const cmp)(Iterator *, Iterator *))
+void Vec_begin(Vec *vec, Iterator *iterator, int (*const cmp)(const uint8_t *, const uint8_t *))
 {
   Vec_basic_validations(vec);
   if (vec->container.size == 0) RAISE(ExceptEmptyDataStructure, "Can't fetch any iterator from an empty vector");
@@ -324,7 +326,7 @@ void Vec_begin(Vec *vec, Iterator *iterator, int (*const cmp)(Iterator *, Iterat
 }
 
 
-void Vec_end(Vec *vec, Iterator *iterator, int (*const cmp)(Iterator *, Iterator *))
+void Vec_end(Vec *vec, Iterator *iterator, int (*const cmp)(const uint8_t *, const uint8_t *))
 {
   Vec_basic_validations(vec);
   if (vec->container.size == 0) RAISE(ExceptEmptyDataStructure, "Can't fetch any iterator from an empty vector");

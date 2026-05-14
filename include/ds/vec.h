@@ -6,12 +6,18 @@
 #include "consts.h"
 #include "iterator.h"
 
-#define VEC(type, ...)				\
-  struct {					\
+#define DEFINE_VEC_TYPE(type)			\
+  struct ds_vec_ ## type ## _t {			\
     const type *buff;				\
     const uint32_t capacity, size, type_size;	\
     const DS_State state;			\
-  }
+    const type *_foo_type_ptr;			\
+    const Vec *_foo_ds_type_ptr;		\
+  };						\
+  typedef struct ds_vec_ ## type ## _t ds_vec_ ## type ## _t
+
+#define VEC(type, ...)				\
+  ds_vec_ ## type ## _t
 
 #define VEC_INIT(vec, ...)					\
   __extension__ ({						\
@@ -167,7 +173,38 @@ extern void Vec_remove(Vec *vec, uint32_t index);
 extern void Vec_replace(Vec *vec, uint32_t index, const uint8_t *new_value);
 extern void Vec_clear(Vec *vec);
 extern void Vec_destroy(Vec *vec);
-extern void Vec_begin(Vec *vec, Iterator *iterator, int (*const cmp)(Iterator *, Iterator *));
-extern void Vec_end(Vec *vec, Iterator *iterator, int (*const cmp)(Iterator *, Iterator *));
+extern void Vec_begin(Vec *vec, Iterator *iterator, int (*const cmp)(const uint8_t *, const uint8_t *));
+extern void Vec_end(Vec *vec, Iterator *iterator, int (*const cmp)(const uint8_t *, const uint8_t *));
+
+
+
+#ifdef VEC_PRIVATE
+
+struct Vec {
+  Container container;
+  DS_State state;
+};
+
+#endif
+
+DEFINE_VEC_TYPE(int);
+DEFINE_VEC_TYPE(long);
+DEFINE_VEC_TYPE(short);
+DEFINE_VEC_TYPE(int8_t);
+DEFINE_VEC_TYPE(int16_t);
+DEFINE_VEC_TYPE(int32_t);
+DEFINE_VEC_TYPE(int64_t);
+
+DEFINE_VEC_TYPE(uint8_t);
+DEFINE_VEC_TYPE(uint16_t);
+DEFINE_VEC_TYPE(uint32_t);
+DEFINE_VEC_TYPE(uint64_t);
+DEFINE_VEC_TYPE(size_t);
+
+
+DEFINE_VEC_TYPE(float);
+DEFINE_VEC_TYPE(double);
+DEFINE_VEC_TYPE(bool);
+
 
 #endif
